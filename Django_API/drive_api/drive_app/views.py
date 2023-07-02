@@ -80,12 +80,12 @@ class list_download_content_View(ListAPIView):
             if (self.request.GET.get('id') != None)  & (self.request.GET.get('table_name') != None):
                 drive = Google_authentication(self.request.GET.get('id'))
                 filedownloaded = drive.drive.CreateFile({'id':self.request.GET.get('id')})
-                filedownloaded.GetContentFile('example.csv')
-                df = pd.read_csv('example.csv')
+                filedownloaded.GetContentFile(r'Django_API\drive_api\blob\example.csv')
+                df = pd.read_csv(r'Django_API\drive_api\blob\example.csv')
                 url = "mssql+pyodbc://"+os.getenv('user')+":"+os.getenv('password')+"@"+os.getenv('host')+":"+os.getenv('port')+"/"+os.getenv('db_name')+"?driver=ODBC+Driver+17+for+SQL+Server"
                 engine = sqlalchemy.create_engine(url)
                 df.to_sql(name=self.request.GET.get('table_name'), con=engine, if_exists='replace')
-                msg = {'detail':"successfully downloaded file"}        
+                msg = {'detail':"successfully ingested the data into database from selected file"}        
                 return Response(msg)
             else:
                 msg = {
@@ -97,3 +97,8 @@ class list_download_content_View(ListAPIView):
                 "detail": "Invalid request --->" + str(e)
             }
             raise NotFound(msg)
+        finally:
+            # delete the downloaded file from the directory
+            files = os.listdir(r'Django_API\drive_api\blob')
+            for file in files:
+                os.remove( r'Django_API\drive_api\blob\\' +file)
